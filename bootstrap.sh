@@ -8,7 +8,6 @@ set -e # Exit immediately if any command fails.
 # --- Helper Functions for Color and Style ---
 info() { echo -e "\e[34m\e[1m[INFO]\e[0m $1"; }
 prompt() { read -p $'\e[32m\e[1m[PROMPT]\e[0m '"$1" "$2"; }
-# New function for prompts that just wait for Enter, fixing the bug.
 wait_for_user() { read -p $'\e[32m\e[1m[PROMPT]\e[0m '"$1"; }
 warn() { echo -e "\e[33m\e[1m[WARN]\e[0m $1"; }
 success() { echo -e "\e[32m\e[1m[SUCCESS]\e[0m $1"; }
@@ -18,15 +17,16 @@ fail() { echo -e "\e[31m\e[1m[FAIL]\e[0m $1"; exit 1; }
 info "Welcome to the interactive NixOS GitOps Bootstrapper!"
 info "This script will guide you through setting up this server to be managed by your private configuration repository."
 
-# 1. Get GitHub details from the user (The new, improved method)
+# 1. Get GitHub details from the user (Improved method)
 while true; do
-  prompt "Please enter your GitHub Username: " GH_USER
-  if [ -n "$GH_USER" ]; then break; else warn "Username cannot be empty."; fi
-done
-
-while true; do
-  prompt "Please enter the name of your private NixOS configuration repository: " GH_REPO
-  if [ -n "$GH_REPO" ]; then break; else warn "Repository name cannot be empty."; fi
+  prompt "Please enter your GitHub repository (e.g., username/repo): " GH_SLUG
+  if [[ "$GH_SLUG" =~ ^[^/]+/[^/]+$ ]]; then
+    GH_USER=$(echo "$GH_SLUG" | cut -d'/' -f1)
+    GH_REPO=$(echo "$GH_SLUG" | cut -d'/' -f2)
+    break
+  else
+    warn "Invalid format. Please use the format 'username/repo'."
+  fi
 done
 
 # Construct the SSH URL from the user's input
@@ -65,7 +65,6 @@ cat "${KEY_PATH}.pub"
 echo "--- END OF KEY ---"
 echo -e "\e[0m"
 
-# Use our new, bug-free wait function
 wait_for_user "Press [Enter] after you have added and saved the key on GitHub..."
 
 # 4. Test the Connection Until It Works
