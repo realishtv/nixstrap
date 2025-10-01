@@ -17,7 +17,7 @@ fail() { echo -e "\e[31m\e[1m[FAIL]\e[0m $1"; exit 1; }
 info "Welcome to the interactive NixOS GitOps Bootstrapper!"
 info "This script will guide you through setting up this server to be managed by your private configuration repository."
 
-# 1. Get GitHub details from the user (Improved method)
+# 1. Get GitHub details from the user
 while true; do
   prompt "Please enter your GitHub repository (e.g., username/repo): " GH_SLUG
   if [[ "$GH_SLUG" =~ ^[^/]+/[^/]+$ ]]; then
@@ -50,14 +50,12 @@ fi
 info "Please add the following public key to your GitHub repository's Deploy Keys."
 warn "IMPORTANT: Do NOT check 'Allow write access'. This key should be read-only."
 
-# Transform the SSH URL into a clickable link
 WEB_URL_BASE="https://github.com/${GH_USER}/${GH_REPO}"
 DEPLOY_KEY_URL="${WEB_URL_BASE}/settings/keys"
 
 echo ""
 info "Click this link to go directly to the Deploy Keys page:"
 echo -e "\e[32m\e[4m${DEPLOY_KEY_URL}\e[0m"
-
 echo ""
 echo -e "\e[33m"
 echo "--- COPY THE KEY BELOW AND PASTE IT ON THAT PAGE ---"
@@ -78,7 +76,8 @@ success "Connection successful!"
 # 5. The Pivot: Clone and Prepare for Rebuild
 info "Cloning your real configuration to a temporary location..."
 CLONE_DIR="/tmp/real-config"
-rm -rf "$CLONE_DIR"
+# FIX: Use sudo to ensure we can clean up the old directory
+sudo rm -rf "$CLONE_DIR"
 GIT_SSH_COMMAND="ssh -i $KEY_PATH -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
 git clone "$REPO_URL" "$CLONE_DIR"
 
