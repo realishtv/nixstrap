@@ -102,12 +102,16 @@ info "Pivoting to your real configuration. This will now build your final system
 info "The command being run is: sudo nixos-rebuild switch --flake $CLONE_DIR#$HOSTNAME"
 
 if sudo nixos-rebuild switch --flake "$CLONE_DIR#$HOSTNAME"; then
-  success "Bootstrap complete! Your system is now managed by your private repository."
-  info "The automation service (e.g., deploy-rs) defined in your repository will now take over."
-  info "This temporary bootstrap script and its key have served their purpose."
-  rm -f "${KEY_PATH}" "${KEY_PATH}.pub"
-else
-  fail "The final build failed. The system has not been changed."
-  fail "Please check the errors above. Your real configuration may have a problem."
-fi
+  success "Bootstrap complete! Your system is now managed by your private repository."
+  info "The automation service (e.g., deploy-rs) defined in your repository will now take over."
 
+  # --- NEW CLEANUP & FINAL COPY STEP ---
+  info "Copying the successful flake configuration to /etc/nixos for deploy-rs and future use."
+  sudo rsync -av --delete "$CLONE_DIR/" "/etc/nixos/"
+
+  info "This temporary bootstrap script and its key have served their purpose."
+  rm -f "${KEY_PATH}" "${KEY_PATH}.pub"
+else
+  fail "The final build failed. The system has not been changed."
+  fail "Please check the errors above. Your real configuration may have a problem."
+fi
